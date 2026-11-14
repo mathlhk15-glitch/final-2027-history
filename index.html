@@ -244,6 +244,13 @@ tr:last-child td{border-bottom:0}
  .printonly{display:block}
  .blind .k{background:none;color:#000!important}
 }
+
+/* 인포그래픽 연동 */
+.infobanner{display:flex;gap:.75rem;align-items:center;text-decoration:none;color:#fff;background:linear-gradient(135deg,#2f5bd3,#7b3fa0);border-radius:1rem;padding:.85rem 1rem;margin:0 0 1rem}
+.infobanner b{display:block;line-height:1.35}.infobanner small{display:block;opacity:.92;font-size:.8rem}
+.infobanner .ib-ic{font-size:1.7rem}
+.pathlist{margin:.3rem 0 .4rem;padding-left:1.3rem}.pathlist li{margin:.35rem 0}.pathlist a{font-weight:700}
+@media print{.infobanner{display:none!important}}
 </style>
 </head>
 <body>
@@ -730,6 +737,18 @@ function closeDrawer(){$('#drawer')?.remove()}
 function scrollToTarget(id){if(!id)return;requestAnimationFrame(()=>{const el=document.getElementById(id);if(!el)return;
  el.closest('details')?.setAttribute('open','');el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')})}
 
+/* ===== 인포그래픽(infographic.html) 연동 =====
+ 같은 사이트 주소라 이 기기에 저장된 인포그래픽 기록(hist-info-v2)을 읽어서 보여 줌(읽기만 함) */
+function infoRec(){try{const d=JSON.parse(localStorage.getItem('hist-info-v2')||'null');if(!d||typeof d!=='object')return null;
+ const qw=d.qw&&typeof d.qw==='object'?d.qw:{},c=d.c&&typeof d.c==='object'?d.c:{};return{q:Object.keys(qw).length,c:Object.values(c).filter(v=>v===3).length}}catch(e){return null}}
+function infoBanner(href,title,sub){return `<a class="infobanner" href="${href}"><span class="ib-ic">🗺</span><span><b>${title}</b><small>${sub}</small></span></a>`}
+function studyPath(){return `<div class="card noprint"><h2 style="margin-top:0">🧭 추천 공부 순서</h2><ol class="pathlist">
+ <li><b>이해</b> — <a href="infographic.html">표·지도로 한눈에</a>에서 시대 흐름을 잡고 확인 문제 풀기</li>
+ <li><b>암기</b> — <a href="#/clues">가리고 암기</a>로 자료 단서 외우기</li>
+ <li><b>확인</b> — <a href="#/quiz">O/X 문제</a> → <a href="#/timeline">연표 훈련</a></li>
+ <li><b>약점</b> — <a href="#/review">★ 틀린 것 복습</a> + <a href="infographic.html#review">인포그래픽 📌 복습</a> → 틀린 시대만 1단계로</li></ol>
+ <p class="tiny muted" style="margin:0">시험 직전이면 2 → 3 → 4만 반복하세요. 처음 공부하는 고1·2라면 1단계부터 하세요.</p></div>`}
+
 /* ===== 처음 화면 ===== */
 PAGES.home=function(){
  const ones=BLOCKS.flat().filter(b=>b.t==='one');const today=ones[Math.floor(kstToday()/864e5)%ones.length];
@@ -742,6 +761,7 @@ PAGES.home=function(){
   <div class="todayline"><b>오늘의 한 줄</b><br>${esc(plain(today.text))}</div>
   <button class="btn" onclick="go('era/${last}')">${ERAS[last].roman}. ${ERAS[last].key}부터 이어서 →</button>
  </section>
+  ${infoBanner("infographic.html","표·지도로 흐름 잡기 → 한눈에 보는 수능 한국사","시대별 지도·흐름도·비교표 · 확인 문제 48 · 비교실 25쌍")}${studyPath()}
  <div class="grid2" style="margin-bottom:1.1rem">
   <button class="act" onclick="go('era')"><b>📖</b><strong>개념 공부</strong><span>시대별 표·설명·함정</span></button>
   <button class="act" onclick="go('clues')"><b>🃏</b><strong>가리고 암기</strong><span>자료 단서 ${CLUES.length}개</span></button>
@@ -776,6 +796,7 @@ PAGES.era=function(a,target){
  $('#app').innerHTML=`<div style="--era:${e.color}">
  ${eraChips(i,'era')}
  <section class="erahead"><div class="rn">${e.roman} · 원본 ${e.page}쪽</div><h1>${e.key}</h1><p>${esc(e.sub)}</p></section>
+  ${infoBanner("infographic.html#s"+i,"이 시대를 표·지도로 보기 → "+e.roman+" "+e.key,"지도·흐름도·비교표와 확인 문제")}
  <div class="seg noprint" role="tablist">${[['read','📖 읽기'],['blind','🙈 가리기'],['focus','⚠️ 함정·문제만']].map(([m,n])=>`<button class="${eraMode===m?'on':''}" onclick="setEraMode('${m}')">${n}</button>`).join('')}</div>
  ${eraMode==='blind'?`<div class="note noprint row between"><span>가려진 칸을 누르면 보여요.</span><span class="row"><button class="btn soft" onclick="revealAll(true)">모두 보기</button><button class="btn soft" onclick="revealAll(false)">다시 가리기</button></span></div>`:''}
  <div id="eraBody" class="${eraMode==='blind'?'blind':eraMode==='focus'?'focus':''}">${BLOCKS[i].map(b=>renderBlock(b,i)).join('')}</div>
@@ -914,6 +935,7 @@ function moveClue(d){const n=CL.order.length;if(!n)return;CL.idx=(CL.idx+d+n)%n;
 PAGES.review=function(){
  const w=wrongList(),unk=CLUES.filter(c=>S.clue[c.id]==='unknown'),uns=CLUES.filter(c=>S.clue[c.id]==='unsure'),st=FREQ.filter(f=>S.star[f.id]);
  $('#app').innerHTML=`<h1>틀린 것 복습</h1><p class="sub">틀렸거나 헷갈림 표시한 것만 모았어요. 기록은 이 기기에만 저장됩니다.</p>
+  ${(()=>{const r=infoRec();return `<div class="card"><b>🗺 인포그래픽 기록</b><p class="small" style="margin:.3rem 0">${r?`틀린 확인 문제 <b>${r.q}</b>개 · 복습 필요 카드 <b>${r.c}</b>개`:"아직 인포그래픽 기록이 없어요."}</p><a class="btn" href="infographic.html#review">📌 인포그래픽 복습 열기</a></div>`})()}
  <div class="grid2" style="margin-bottom:.9rem"><div class="card" style="margin:0"><div class="small muted">O/X 오답·헷갈림</div><div style="font-size:1.8rem;font-weight:900">${w.length}</div></div><div class="card" style="margin:0"><div class="small muted">모름·헷갈림 단서</div><div style="font-size:1.8rem;font-weight:900">${unk.length+uns.length}</div></div></div>
  <div class="card"><div class="row between"><h2 style="margin:0">O/X 오답 노트</h2>${w.length?`<button class="btn pri" onclick="go('quiz/wrong/'+Date.now())">${w.length}문항 다시 풀기</button>`:''}</div>
  ${w.length?w.sort((a,b)=>S.hist[b.id].w-S.hist[a.id].w).map(q=>{const h=S.hist[q.id];return `<div class="ox"><div class="row between tiny muted"><span>${ERAS[q.era].key}</span><span>틀림 ${h.w}회 / 푼 횟수 ${h.n}회 ${h.u?'· ★헷갈림':''}${h.last===1?' · 최근엔 맞힘':''}</span></div><div class="q">${esc(q.q)}</div><div class="row"><button class="btn pri" onclick="go('quiz/one/${q.id}')">이 문항 다시 풀기</button><button class="btn" onclick="go('era/${q.era}/${q.ref}')">관련 개념</button>${h.u?`<button class="btn soft" onclick="S.hist['${q.id}'].u=false;save();PAGES.review()">헷갈림 해제</button>`:''}</div></div>`}).join(''):'<p class="muted">아직 오답이 없어요. O/X를 풀면 여기에 모입니다.</p>'}</div>
