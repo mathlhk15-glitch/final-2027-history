@@ -710,7 +710,9 @@ function render(){
  if(!R.keepScroll)window.scrollTo(0,0);
  $('#app').focus({preventScroll:true});
 }
-const MENU=[['home','⌂','처음'],['era','📖','개념 공부'],['clues','🃏','가리고 암기'],['quiz','✅','O/X 문제'],['review','★','틀린 것 복습'],['timeline','🕰','연표 훈련'],['compare','⇄','헷갈림 비교실'],['freq','📊','반복 개념 29'],['five','⚡','5분 체크'],['search','🔍','통합 검색'],['source','📄','원본 7쪽'],['extras','＋','보충·정정'],['settings','⚙','설정·백업']];
+const MENU=[['home','⌂','처음'],['era','📖','개념 공부'],['clues','🃏','가리고 암기'],['quiz','✅','O/X 문제'],['review','★','틀린 것 복습'],['timeline','🕰','연표 훈련'],['info','🗺','표·지도로 한눈에'],['compare','⇄','헷갈림 비교실'],['freq','📊','반복 개념 29'],['five','⚡','5분 체크'],['search','🔍','통합 검색'],['source','📄','원본 7쪽'],['extras','＋','보충·정정'],['settings','⚙','설정·백업']];
+/* 같은 저장소의 인포그래픽(infographic.html)으로 이동. 뒤로 가기 때 다시 넘어가지 않도록 주소를 처음 화면으로 바꿔 둔다 */
+PAGES.info=function(){history.replaceState(null,'','#/');location.href='infographic.html'};
 function nav(){
  const cur=R.name==='print'?'review':R.name;
  $('#side').innerHTML='<h4>학습 메뉴</h4>'+MENU.map(([k,ic,n])=>`<button class="navbtn ${cur===k?'on':''}" onclick="go('${k}')"><span>${ic}</span>${n}</button>`).join('')+'<h4>시대 바로가기</h4>'+ERAS.map((e,i)=>`<button class="navbtn ${R.name==='era'&&+R.args[0]===i?'on':''}" onclick="go('era/${i}')"><span class="dot" style="background:${e.color}"></span>${e.roman}. ${e.key}</button>`).join('');
